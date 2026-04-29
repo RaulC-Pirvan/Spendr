@@ -332,22 +332,72 @@ tr:last-child td {
   border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-@media (max-width: 920px) {
-  .topbar,
+/* MOBILE FIX */
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  min-width: 600px;
+}
+
+/* MOBILE CARD VIEW */
+
+.desktop-only {
+  display: block;
+}
+
+.mobile-cards {
+  display: none;
+  gap: 12px;
+}
+
+.expense-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.expense-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.expense-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.expense-row span {
+  color: #94a3b8;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
-    flex-direction: column;
-  }
-
-  .dashboard-grid {
-    display: grid;
   }
 
   .summary-grid {
     grid-template-columns: 1fr;
   }
 
-  .status-pill {
-    align-self: flex-start;
+  h1 {
+    font-size: 2.6rem;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-cards {
+    display: grid;
   }
 }

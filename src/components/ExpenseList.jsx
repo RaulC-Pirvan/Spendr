@@ -33,8 +33,8 @@ export default function ExpenseList({ refreshKey }) {
   }, [refreshKey]);
 
   const summary = useMemo(() => {
-    const processed = expenses.filter((expense) => expense.status === "PROCESSED");
-    const total = processed.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+    const processed = expenses.filter((e) => e.status === "PROCESSED");
+    const total = processed.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
     return {
       total,
@@ -65,47 +65,78 @@ export default function ExpenseList({ refreshKey }) {
         {expenses.length === 0 ? (
           <div className="empty-state">
             <h3>No expenses yet</h3>
-            <p>Upload your first receipt to populate this dashboard.</p>
+            <p>Upload your first receipt.</p>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Merchant</th>
-                  <th>Amount</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {expenses.map((expense) => (
-                  <tr key={expense.expenseId}>
-                    <td>
-                      <div className="merchant-cell">
-                        <span className="merchant-icon">
-                          {(expense.merchant || "?").slice(0, 1)}
-                        </span>
-                        <span>{expense.merchant || "Pending OCR"}</span>
-                      </div>
-                    </td>
-                    <td>
-                      {expense.amount ? `${Number(expense.amount).toFixed(2)} ${expense.currency || ""}` : "-"}
-                    </td>
-                    <td>{expense.category || "-"}</td>
-                    <td>
-                      <span className={`status-badge ${expense.status?.toLowerCase()}`}>
-                        {expense.status}
-                      </span>
-                    </td>
-                    <td>{expense.createdAt?.slice(0, 10) || "-"}</td>
+          <>
+            {/* DESKTOP TABLE */}
+            <div className="table-wrap desktop-only">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Merchant</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Created</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {expenses.map((expense) => (
+                    <tr key={expense.expenseId}>
+                      <td>{expense.merchant || "Pending OCR"}</td>
+                      <td>
+                        {expense.amount
+                          ? `${Number(expense.amount).toFixed(2)} ${expense.currency || ""}`
+                          : "-"}
+                      </td>
+                      <td>{expense.category || "-"}</td>
+                      <td>
+                        <span className={`status-badge ${expense.status?.toLowerCase()}`}>
+                          {expense.status}
+                        </span>
+                      </td>
+                      <td>{expense.createdAt?.slice(0, 10) || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* MOBILE CARDS */}
+            <div className="mobile-cards">
+              {expenses.map((expense) => (
+                <div key={expense.expenseId} className="expense-card">
+                  <div className="expense-top">
+                    <strong>{expense.merchant || "Pending OCR"}</strong>
+                    <span className={`status-badge ${expense.status?.toLowerCase()}`}>
+                      {expense.status}
+                    </span>
+                  </div>
+
+                  <div className="expense-row">
+                    <span>Amount</span>
+                    <strong>
+                      {expense.amount
+                        ? `${Number(expense.amount).toFixed(2)} ${expense.currency || ""}`
+                        : "-"}
+                    </strong>
+                  </div>
+
+                  <div className="expense-row">
+                    <span>Category</span>
+                    <strong>{expense.category || "-"}</strong>
+                  </div>
+
+                  <div className="expense-row">
+                    <span>Date</span>
+                    <strong>{expense.createdAt?.slice(0, 10) || "-"}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
