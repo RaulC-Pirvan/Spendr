@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function UploadReceipt({ onUploaded }) {
+  const inputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
 
   const handleUpload = async () => {
@@ -14,18 +16,18 @@ export default function UploadReceipt({ onUploaded }) {
     }
 
     try {
-      setStatus("Requesting upload URL...");
+      setIsUploading(true);
+      setResult(null);
+      setStatus("Requesting secure upload URL...");
 
       const uploadRes = await fetch(`${API_URL}/receipts/upload-url`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type || "image/jpeg",
-          userId: "test-user"
-        })
+          userId: "test-user",
+        }),
       });
 
       const uploadData = await uploadRes.json();
@@ -38,10 +40,8 @@ export default function UploadReceipt({ onUploaded }) {
 
       const s3Res = await fetch(uploadData.uploadUrl, {
         method: "PUT",
-        headers: {
-          "Content-Type": file.type || "image/jpeg"
-        },
-        body: file
+        headers: { "Content-Type": file.type || "image/jpeg" },
+        body: file,
       });
 
       if (!s3Res.ok) {
@@ -52,13 +52,11 @@ export default function UploadReceipt({ onUploaded }) {
 
       const processRes = await fetch(`${API_URL}/receipts/process`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: "test-user",
-          expenseId: uploadData.expenseId
-        })
+          expenseId: uploadData.expenseId,
+        }),
       });
 
       const processData = await processRes.json();
@@ -69,38 +67,71 @@ export default function UploadReceipt({ onUploaded }) {
 
       setResult(processData.expense);
       setStatus("Receipt processed successfully.");
+      setFile(null);
 
+      if (inputRef.current) inputRef.current.value = "";
       if (onUploaded) onUploaded();
-
     } catch (err) {
-      console.error(err);
       setStatus(`Error: ${err.message}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <div style={{ border: "1px solid #ddd", padding: "16px", borderRadius: "8px" }}>
-      <h2>Upload receipt</h2>
+    <div className="card upload-card">
+      <div className="card-header">
+        <div>
+          <p className="section-label">Receipt upload</p>
+          <h2>Add a new expense</h2>
+        </div>
+        <span className="badge">S3 + Lambda</span>
+      </div>
 
-      <input
-        type="file"
-        accept="image/*,.pdf"
-        onChange={(e) => setFile(e.target.files[0])}
-      />
+      <div
+        className="dropzone"
+        onClick={() => inputRef.current?.click()}
+      >
+        <div className="upload-icon">↑</div>
+        <h3>{file ? file.name : "Choose a receipt"}</h3>
+        <p>
+          Upload a JPG, PNG or PDF receipt. Spendr will store it in S3 and process it through AWS.
+        </p>
 
-      <button onClick={handleUpload} style={{ marginLeft: "12px" }}>
-        Upload
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,.pdf"
+          hidden
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
+      </div>
+
+      <button className="primary-button" onClick={handleUpload} disabled={isUploading}>
+        {isUploading ? "Processing..." : "Upload receipt"}
       </button>
 
-      {status && <p>{status}</p>}
+      {status && (
+        <div className={status.startsWith("Error") ? "alert error" : "alert"}>
+          {status}
+        </div>
+      )}
 
       {result && (
-        <div>
-          <h3>Processed expense</h3>
-          <p><strong>Merchant:</strong> {result.merchant}</p>
-          <p><strong>Amount:</strong> {result.amount} {result.currency}</p>
-          <p><strong>Category:</strong> {result.category}</p>
-          <p><strong>Status:</strong> {result.status}</p>
+        <div className="result-card">
+          <p className="section-label">Latest processed expense</p>
+          <div className="result-row">
+            <span>Merchant</span>
+            <strong>{result.merchant || "-"}</strong>
+          </div>
+          <div className="result-row">
+            <span>Amount</span>
+            <strong>{result.amount} {result.currency}</strong>
+          </div>
+          <div className="result-row">
+            <span>Category</span>
+            <strong>{result.category || "-"}</strong>
+          </div>
         </div>
       )}
     </div>
