@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -12,8 +13,21 @@ export default function ExpenseList({ refreshKey }) {
     async function loadExpenses() {
       try {
         setError("");
-        const res = await fetch(`${API_URL}/expenses?userId=test-user`);
+
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString();
+
+        const res = await fetch(`${API_URL}/expenses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Failed to load expenses");
+        }
 
         if (!ignore) {
           setExpenses(data.expenses || []);
@@ -69,7 +83,6 @@ export default function ExpenseList({ refreshKey }) {
           </div>
         ) : (
           <>
-            {/* DESKTOP TABLE */}
             <div className="table-wrap desktop-only">
               <table>
                 <thead>
@@ -104,7 +117,6 @@ export default function ExpenseList({ refreshKey }) {
               </table>
             </div>
 
-            {/* MOBILE CARDS */}
             <div className="mobile-cards">
               {expenses.map((expense) => (
                 <div key={expense.expenseId} className="expense-card">

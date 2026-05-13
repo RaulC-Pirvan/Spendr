@@ -3,7 +3,7 @@ import UploadReceipt from "./components/UploadReceipt";
 import ExpenseList from "./components/ExpenseList";
 import "./App.css";
 
-function App() {
+function App({ signOut, user }) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
@@ -15,11 +15,20 @@ function App() {
           <p className="subtitle">
             Upload receipts, process them in the cloud, and track your expenses.
           </p>
+          <p className="user-line">
+            Signed in as <strong>{user?.signInDetails?.loginId || "user"}</strong>
+          </p>
         </div>
 
-        <div className="status-pill">
-          <span className="status-dot" />
-          Live AWS Demo
+        <div className="topbar-actions">
+          <div className="status-pill">
+            <span className="status-dot" />
+            Live AWS Demo
+          </div>
+
+          <button className="ghost-button" onClick={signOut}>
+            Sign out
+          </button>
         </div>
       </header>
 

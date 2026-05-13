@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -8,6 +9,11 @@ export default function UploadReceipt({ onUploaded }) {
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
+
+  const getToken = async () => {
+    const session = await fetchAuthSession();
+    return session.tokens?.idToken?.toString();
+  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -20,13 +26,17 @@ export default function UploadReceipt({ onUploaded }) {
       setResult(null);
       setStatus("Requesting secure upload URL...");
 
+      const token = await getToken();
+
       const uploadRes = await fetch(`${API_URL}/receipts/upload-url`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type || "image/jpeg",
-          userId: "test-user",
         }),
       });
 
@@ -40,7 +50,9 @@ export default function UploadReceipt({ onUploaded }) {
 
       const s3Res = await fetch(uploadData.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type || "image/jpeg" },
+        headers: {
+          "Content-Type": file.type || "image/jpeg",
+        },
         body: file,
       });
 
@@ -52,10 +64,13 @@ export default function UploadReceipt({ onUploaded }) {
 
       const processRes = await fetch(`${API_URL}/receipts/process`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          userId: "test-user",
           expenseId: uploadData.expenseId,
+          s3Key: uploadData.s3Key,
         }),
       });
 
@@ -88,14 +103,12 @@ export default function UploadReceipt({ onUploaded }) {
         <span className="badge">S3 + Lambda</span>
       </div>
 
-      <div
-        className="dropzone"
-        onClick={() => inputRef.current?.click()}
-      >
+      <div className="dropzone" onClick={() => inputRef.current?.click()}>
         <div className="upload-icon">↑</div>
         <h3>{file ? file.name : "Choose a receipt"}</h3>
         <p>
-          Upload a JPG, PNG or PDF receipt. Spendr will store it in S3 and process it through AWS.
+          Upload a JPG, PNG or PDF receipt. Spendr will store it in S3 and
+          process it through AWS.
         </p>
 
         <input
@@ -126,7 +139,9 @@ export default function UploadReceipt({ onUploaded }) {
           </div>
           <div className="result-row">
             <span>Amount</span>
-            <strong>{result.amount} {result.currency}</strong>
+            <strong>
+              {result.amount} {result.currency || ""}
+            </strong>
           </div>
           <div className="result-row">
             <span>Category</span>

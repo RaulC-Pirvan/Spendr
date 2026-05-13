@@ -401,3 +401,34 @@ table {
     display: grid;
   }
 }
+.user-line {
+  margin-top: 12px;
+  color: #94a3b8;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ghost-button {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.6);
+  color: #e5ecff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ghost-button:hover {
+  background: rgba(30, 41, 59, 0.9);
+}
+
+@media (max-width: 768px) {
+  .topbar-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
